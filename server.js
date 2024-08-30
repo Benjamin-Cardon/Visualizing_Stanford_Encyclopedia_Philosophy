@@ -2,15 +2,15 @@ const express = require('express')
 const app = express()
 const port = 4000
 var neo4j = require('neo4j-driver');
-
+const cors = require('cors');
+app.use(cors());
 
 
 
 app.get('/', (req, res) => {
-  get_graph("Alan Tur ing").then((result) => {
+  get_graph("Alan Turing").then((result) => {
     //console.log(JSON.stringify(result));
-
-    res.send(JSON.stringify(result))
+    res.json(result)
   }
   )
 

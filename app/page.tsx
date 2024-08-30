@@ -1,7 +1,7 @@
 "use client";
 import { group } from "console";
 import * as d3 from "d3";
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 const nodes = require('../node_records.json')
 const relationships = require('../relationship_records.json')
 
@@ -22,37 +22,47 @@ function Component() {
 }
 function Graph() {
   const ref = useRef()
-  async function getData() {
-    const url = "http://localhost:4000/";
-    try {
-      const response = await fetch(url, { mode: 'no-cors' });
-      if (!response.ok) {
-        throw new Error(`Response status: ${response.status}`);
-      }
+  const [current_node, set_current_node] = useState("Alan Turing")
+  const [data, setData] = useState({} as any)
+  const [settings, setSettings] = useState({})
 
-      const json = await response.json();
-      console.log(json);
-    } catch (error) {
-      console.error(error.message);
-    }
+
+  const fetch_data_with_node_title = () => {
+    // need to add fetching for specific title.
+    fetch('http://localhost:4000', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      }, mode: 'cors'
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        setData(data)
+      })
+      .catch(error => {
+        console.error('There was an error!', error);
+      });
   }
+  useEffect(fetch_data_with_node_title, [current_node])
 
-  useEffect(() => {
-    getData()
+  const create_centered_graph = () => {
+    const svgElement = d3.select(ref.current)
     const width = 928;
     const height = 600;
     const color = d3.scaleOrdinal(d3.schemeCategory10);
 
-    const rel = relationships.map((d) => ({ source: d.relationship.start, target: d.relationship.end, value: d.relationship.properties.count }));
-    const nod = nodes.map(d => ({ id: d.connected.identity, group: d.connected.labels[0] == "Entity" ? 1 : 2 }));
-    console.log(nod)
-
+    const nod = data.maximal_nodes.map((node) => { return { id: node.identity.low, group: node.properties.louvain_community.low } })
+    const rel = data.maximal_relationships.map((relate) => { return { source: relate.start.low, target: relate.end.low } })
     const simulation = d3.forceSimulation(nod)
       .force("link", d3.forceLink(rel).id(d => d.id))
       .force("charge", d3.forceManyBody())
       .force("center", d3.forceCenter(width / 2, height / 2)).on("tick", ticked);
-
-    const svgElement = d3.select(ref.current)
+    // exit exising nodes?
     svgElement.attr("width", width)
       .attr("height", height)
       .attr("viewBox", [0, 0, width, height])
@@ -108,22 +118,14 @@ function Graph() {
       event.subject.fx = event.x;
       event.subject.fy = event.y;
     }
-
-  }, [])
+  }
+  useEffect(() => {
+    if (Object.keys(data).includes("maximal_nodes")) {
+      create_centered_graph()
+    }
+  }, [data])
   return (<svg ref={ref} width={640} height={400}></svg>)
 }
 
-async function getData() {
-  const url = "http://localhost:4000/";
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Response status: ${response.status}`);
-    }
 
-    const json = await response.json();
-    console.log(json);
-  } catch (error) {
-    console.error(error.message);
-  }
-}
+
