@@ -22,7 +22,23 @@ function Component() {
 }
 function Graph() {
   const ref = useRef()
+  async function getData() {
+    const url = "http://localhost:4000/";
+    try {
+      const response = await fetch(url, { mode: 'no-cors' });
+      if (!response.ok) {
+        throw new Error(`Response status: ${response.status}`);
+      }
+
+      const json = await response.json();
+      console.log(json);
+    } catch (error) {
+      console.error(error.message);
+    }
+  }
+
   useEffect(() => {
+    getData()
     const width = 928;
     const height = 600;
     const color = d3.scaleOrdinal(d3.schemeCategory10);
@@ -95,4 +111,19 @@ function Graph() {
 
   }, [])
   return (<svg ref={ref} width={640} height={400}></svg>)
+}
+
+async function getData() {
+  const url = "http://localhost:4000/";
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Response status: ${response.status}`);
+    }
+
+    const json = await response.json();
+    console.log(json);
+  } catch (error) {
+    console.error(error.message);
+  }
 }
