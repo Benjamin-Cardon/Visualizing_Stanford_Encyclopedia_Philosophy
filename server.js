@@ -4,11 +4,14 @@ const port = 4000
 var neo4j = require('neo4j-driver');
 const cors = require('cors');
 app.use(cors());
+app.use(express.json()) // for parsing application/json
+app.use(express.urlencoded({ extended: true })) // for parsing application/x-www-form-urlencoded
 
 
 
-app.get('/', (req, res) => {
-  get_graph("Alan Turing").then((result) => {
+app.get('/graph', (req, res) => {
+  console.log(req.query.title)
+  get_graph(req.query.title).then((result) => {
     //console.log(JSON.stringify(result));
     res.json(result)
   }
